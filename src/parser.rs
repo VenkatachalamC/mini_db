@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::{collections::HashSet};
+use pretty_table::table;
+
 use crate::lexer::Lexer;
 
 use crate::lexer::*;
 use crate::processor::Processor;
+use crate::table::{Column, ColumnType, DataType, ID_SIZE, INT_SIZE, STRING_SIZE};
 
 
 pub struct Parser<'a>{
@@ -98,7 +101,54 @@ impl<'a> Parser<'a> {
         Ok(())
     }
     fn parse_create(&mut self) -> Result<(),String> {
-
+        let table_keyword = self.lexer.consume();
+        println!("lexer {:?}",self.lexer);
+        match table_keyword {
+            Token::Keyword(KeyWords::TABLE)=>{},
+            _=> return Err("Expected TABLE keyword".to_string())
+        }
+        let table_name = match self.lexer.consume() {
+            Token::Identifier(name) => name,
+            _ => return Err("Expected table name".to_string())
+        };
+        match self.lexer.consume() {
+            Token::Keyword(KeyWords::LEFTPAREN)=>{},
+            _ => return Err("Expected ( for Columns specifier".to_string())
+        };
+        let mut columns_meta:Vec<(String,DataType)> = vec![];
+        loop {
+            let column_name = match self.lexer.consume() {
+                Token::Identifier(name) => name,
+                _ => return Err("Expected column name".to_string())
+            };
+            let data_type = match self.lexer.consume() {
+                Token::Keyword(KeyWords::INT)=>DataType::INT,
+                Token::Keyword(KeyWords::STRING)=>DataType::STRING,
+                _ => return Err("Expected data type".to_string())
+            };
+            columns_meta.push((column_name, data_type));
+            let next_token = self.lexer.consume();
+            match next_token {
+                Token::Keyword(KeyWords::COMMA) => continue,
+                Token::Keyword(KeyWords::RIGHTPAREN) =>  break,
+                _ => return Err("Error parsing Columns".to_string())
+            }
+        }
+        let mut columns = vec![];
+        for (column_name, data_type) in columns_meta.iter(){
+            let col = Column{
+                name: column_name.clone(),
+                data_type: data_type.clone(),
+                size: match data_type {
+                    DataType::INT=>INT_SIZE,
+                    DataType::STRING=>STRING_SIZE,
+                    DataType::UUID=>ID_SIZE
+                },
+                col_type: ColumnType::FIELD
+            };
+            columns.push(col);
+        }
+        self.processor.create_table(table_name, columns)?;
         Ok(())
     }
 
@@ -220,3 +270,5 @@ mod tests {
         assert_eq!(res, Err("Colums and values doesn't match".to_string()));
     }
 }
+
+

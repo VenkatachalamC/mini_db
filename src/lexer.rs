@@ -11,7 +11,8 @@ pub enum KeyWords {
     INT,
     FROM,
     INTO,
-    VALUES
+    VALUES,
+    TABLE,
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +70,7 @@ impl<'a> Lexer <'a>{
                     "FROM" => Token::Keyword(KeyWords::FROM),
                     "INTO" => Token::Keyword(KeyWords::INTO),
                     "VALUES"=>Token::Keyword(KeyWords::VALUES),
+                    "TABLE"=>Token::Keyword(KeyWords::TABLE),
                     _ => Token::Identifier(word),
                 };
                 self.tokens.push(token);
