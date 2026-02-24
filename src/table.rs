@@ -117,6 +117,7 @@ pub struct Table {
     data_base: Weak<DataBase>,
 }
 
+//TODO fetch FIRST PAGE ON TABLE CREATION.
 impl Table {
     pub fn new(
         name: String,
@@ -125,7 +126,20 @@ impl Table {
         total_rows: usize,
         start_offset: usize,
     ) -> Self {
-        let mut table = Table {
+
+        let mut hasIdColumn = false;
+        for column in columns.iter(){
+            match column.col_type {
+                ColumnType::ID => hasIdColumn = true,
+                _=>{}
+            }
+        }
+
+        let mut columns = columns;
+        if !hasIdColumn {
+            columns.insert(0, Column::new("id".to_string(), ID_SIZE, ColumnType::ID, DataType::UUID));
+        }
+        let table = Table {
             table_name: name,
             pages: vec![],
             columns,
@@ -309,7 +323,7 @@ impl Table {
         row_data.extend_from_slice(id.as_bytes());
         for (i, arg) in args.iter().enumerate() {
             let bytes = arg.as_bytes();
-            let buffer = &mut field_buffers[i + 1];
+            let buffer: &mut Vec<u8> = &mut field_buffers[i+1];
             let len = bytes.len().min(buffer.len());
             buffer[0..len].copy_from_slice(&bytes[0..len]);
             row_data.extend_from_slice(buffer);
@@ -364,8 +378,8 @@ impl Table {
 
             buff[offset + 32] = match column.data_type.clone() {
                 DataType::UUID => 0,
-                DataType::INT => 1,
-                DataType::STRING => 2,
+                DataType::STRING => 1,
+                DataType::INT => 2,
             };
             offset += 33;
         }
