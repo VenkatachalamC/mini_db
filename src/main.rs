@@ -46,6 +46,7 @@ fn main() -> Result<(), io::Error> {
             ".exit" => break,
             command => parse_command(&mut processor, command)?,
         }
+        processor.database.flush();
     }
 
     return Ok(());

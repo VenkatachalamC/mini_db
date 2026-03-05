@@ -139,14 +139,18 @@ impl Table {
         if !hasIdColumn {
             columns.insert(0, Column::new("id".to_string(), ID_SIZE, ColumnType::ID, DataType::UUID));
         }
-        let table = Table {
+        let mut table = Table {
             table_name: name,
             pages: vec![],
             columns,
-            total_rows: 0,
+            total_rows,
             start_offset,
             data_base,
         };
+
+        if total_rows > 0 {
+            table.get_page(0);
+        }
 
         // let file_size: usize = table
         //     .data_base
@@ -512,7 +516,7 @@ impl DataBase {
         Ok(())
     }
 
-    fn flush(self: &Rc<Self>) {
+    pub fn flush(self: &Rc<Self>) {
         let mut buff = [0; META_SIZE];
         buff[0] = *self.num_tables.borrow();
         let mut offset = 1;

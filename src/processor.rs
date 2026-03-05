@@ -3,7 +3,7 @@ use std::{collections::{HashMap, HashSet}, rc::Rc};
 use crate::table::{Column, DataBase};
 
 pub struct Processor {
-    database: Rc<DataBase>,
+    pub database: Rc<DataBase>,
 }
 
 impl Processor {
